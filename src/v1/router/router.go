@@ -21,6 +21,7 @@ func getRoutes(db *pg.DB) []Route {
   return []Route{
     {"/users", h.UsersHandler, []string{"GET", "POST"}, nil},
     {"/users/{id}", h.UsersHandlerId, []string{"GET", "PUT", "DELETE"}, nil},
+    // TODO: ask if this is a valid way of using query string
     {"/attendance/class/{id}", h.AttendanceClassHandlerId, []string{"GET"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
     {"/attendance/user/{id}", h.AttendanceUserHandlerId, []string{"GET"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
     {"/attendance/user/{id}", h.AttendanceUserHandlerId, []string{"POST", "PUT"}, nil},

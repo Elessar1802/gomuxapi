@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
-	repo "github.com/Elessar1802/api/src/v1/repository"
 	"github.com/Elessar1802/api/src/v1/services"
 	"github.com/gorilla/mux"
 )
@@ -21,17 +19,8 @@ func (h Handlers) ClassesHandler(w http.ResponseWriter, r *http.Request) {
 		// return all the registered classes and their respective ids
 		res, er = services.GetClasses(h.DB)
 
-	case http.MethodPost:
-		class := repo.Class{}
-		json.NewDecoder(r.Body).Decode(&class)
-		res, er = services.AddClass(h.DB, class)
-
 	default:
-		res = nil
-		er = &err.Error{
-			Code:    400,
-			Message: "Bad request!",
-		}
+    res, er = err.BadRequestResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res, er)
@@ -50,11 +39,7 @@ func (h Handlers) ClassesHandlerId(w http.ResponseWriter, r *http.Request) {
 		res, er = services.GetClass(h.DB, id)
 
 	default:
-		res = nil
-		er = &err.Error{
-			Code:    400,
-			Message: "Bad request!",
-		}
+    res, er = err.BadRequestResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res, er)

@@ -1,0 +1,24 @@
+services:
+  backend:
+    build: .
+    image: app-be
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_ADDR=db # we have specified that the database container is going to have the hostname as db
+    # because of this links I don't have to define a separate docker network and then manually specify
+    # the subnet and then statically specify the ip address of the database container
+    links:
+      - "database:db" # this will make the database service container accessible using the db hostname
+
+  database:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=odin
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-app:/var/lib/postgresql/data
+
+volumes:
+  postgres-app:

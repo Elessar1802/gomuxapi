@@ -6,9 +6,9 @@ import (
 
 type Attendance struct {
 	tableName struct{}  `pg:"attendance"`
-	Id        string    `json:"id"`
-	Date      time.Time `json:"date"`
-	In        time.Time `json:"in"`
+  Id        string    `json:"id" pg:",notnull"`
+  Date      time.Time `json:"date" pg:"type:date,notnull,default:now()"`
+  In        time.Time `json:"in" pg:",notnull,default:now()"`
 	Out       time.Time `json:"out"`
 }
 

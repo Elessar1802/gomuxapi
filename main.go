@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	repo "github.com/Elessar1802/api/src/v1/repository"
 	"github.com/Elessar1802/api/src/v1/router"
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/gorilla/mux"
 )
 
@@ -13,10 +17,14 @@ const PORT = ":8000"
 const API_PREFIX = "/api/v1"
 
 func main() {
+  addr := fmt.Sprintf("%s:5432", os.Getenv("DB_ADDR"))
   db := pg.Connect(&pg.Options{
-		User: "amloch",
-    Database: "app",
+		User: "postgres",
+    Password: "odin",
+    Database: "postgres",
+    Addr: addr,
 	})
+  createTables(db)
 	defer db.Close()
 	r := mux.NewRouter()
 
@@ -28,4 +36,14 @@ func main() {
 
 	// start the server
 	log.Fatal(http.ListenAndServe(PORT, r))
+}
+
+func createTables (db *pg.DB) {
+  opts := &orm.CreateTableOptions{
+    IfNotExists: true,
+  }
+  db.Model(&repo.User{}).CreateTable(opts)
+  db.Model(&repo.Attendance{}).CreateTable(opts)
+  db.Model(&repo.Class{}).CreateTable(opts)
+  db.Model(&repo.Student{}).CreateTable(opts)
 }

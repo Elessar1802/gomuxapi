@@ -6,32 +6,23 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
-func GetClasses(db *pg.DB) ([]repo.Class, *err.Error) {
-	var classes []repo.Class
-	er := db.Model(&classes).Select()
+func GetClasses(db *pg.DB) ([]string, *err.Error) {
+	var classes []string
+	er := db.Model(&repo.Student{}).Column("class").Distinct().Select(&classes)
 	if er != nil {
 		return nil, &err.Error{Code: 404, Message: er.Error()}
 	}
 	return classes, nil
 }
 
-/*
- * func will return (@repo.Class, nil) if no error
- * otherwise (nil, err)
- */
-func AddClass(db *pg.DB, c repo.Class) (interface{}, *err.Error) {
-	_, er := db.Model(&c).Insert()
+func GetClass(db *pg.DB, name string) ([]repo.User, *err.Error) {
+  users := []repo.User{}
+  er := db.Model().Table("users").
+    ColumnExpr("users.id, users.name, users.phone").
+    Join("JOIN students ON students.id = users.id and students.class = 'x_a'").
+    Select(&users)
 	if er != nil {
 		return nil, &err.Error{Code: 404, Message: er.Error()}
 	}
-	return c, nil
-}
-
-func GetClass(db *pg.DB, name string) (interface{}, *err.Error) {
-	cl := repo.Class{Name: name}
-	er := db.Model(&cl).WherePK().Select()
-	if er != nil {
-		return nil, &err.Error{Code: 404, Message: er.Error()}
-	}
-	return cl, nil
+	return users, nil
 }
