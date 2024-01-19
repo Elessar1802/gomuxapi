@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-db
+  labels:
+    app: app-db 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-db
+  template:
+    metadata:
+      labels:
+        app: app-db
+    spec:
+      containers:
+        - name: app-db
+          image: postgres
+          ports:
+          - containerPort: 5432
+          env:
+          - name: POSTGRES_USERNAME
+            value: postgres
+          - name: POSTGRES_DB
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: app-be-secret
+                key: dbpassword
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-db-service
+spec:
+  selector:
+    app: app-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

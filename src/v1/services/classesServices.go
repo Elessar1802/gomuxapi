@@ -19,7 +19,7 @@ func GetClass(db *pg.DB, name string) ([]repo.User, *err.Error) {
   users := []repo.User{}
   er := db.Model().Table("users").
     ColumnExpr("users.id, users.name, users.phone").
-    Join("JOIN students ON students.id = users.id and students.class = 'x_a'").
+    Join("JOIN students ON students.id = users.id and students.class = ?", name).
     Select(&users)
 	if er != nil {
 		return nil, &err.Error{Code: 404, Message: er.Error()}

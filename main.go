@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +16,7 @@ const PORT = ":8000"
 const API_PREFIX = "/api/v1"
 
 func main() {
-  addr := fmt.Sprintf("%s:5432", os.Getenv("DB_ADDR"))
+  addr := os.Getenv("DB_ADDR")
   db := pg.Connect(&pg.Options{
 		User: "postgres",
     Password: "odin",
@@ -44,6 +43,5 @@ func createTables (db *pg.DB) {
   }
   db.Model(&repo.User{}).CreateTable(opts)
   db.Model(&repo.Attendance{}).CreateTable(opts)
-  db.Model(&repo.Class{}).CreateTable(opts)
   db.Model(&repo.Student{}).CreateTable(opts)
 }

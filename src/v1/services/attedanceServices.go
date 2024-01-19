@@ -42,7 +42,7 @@ func AttendanceClassId(db *pg.DB, id string, from string, to string) (interface{
   // Using joins
 	er := db.Model().Table("attendance").
 		ColumnExpr("attendance.*").
-		Join("JOIN students on students.id = attendance.id and students.class = 'x_a'").
+		Join("JOIN students on students.id = attendance.id and students.class = ?", id).
 		Where("date >= ?", from).Where("date <= ?", to).
 		Select(&attendances)
 	if er != nil {
