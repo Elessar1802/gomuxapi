@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,7 +17,7 @@ const PORT = ":8000"
 const API_PREFIX = "/api/v1"
 
 func main() {
-  addr := os.Getenv("DB_ADDR")
+  addr := fmt.Sprintf("%s:%s", os.Getenv("APP_DB_SERVICE_SERVICE_HOST"), os.Getenv("APP_DB_SERVICE_SERVICE_PORT"))
   db := pg.Connect(&pg.Options{
 		User: "postgres",
     Password: "odin",

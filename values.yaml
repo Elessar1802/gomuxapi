@@ -1,0 +1,4 @@
+replicaCount: 1
+jwtSecret: cc#ti7zSQv$vPT3WwmBRB%Pes^GqoucP&Z$
+dbPassword: odin
+backendImage: appbe

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: app-be
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }} 
   selector:
     matchLabels:
       app: app-be
@@ -17,16 +17,18 @@ spec:
     spec:
       containers:
       - name: app-be
-        image: appbe
+        image: {{ .Values.backendImage }}
         imagePullPolicy: Never # Otherwise It will try and pull it from dockerhub
         ports:
         - containerPort: 8000
         env:
         - name: JWT_SECRET
+          value: {{ .Values.jwtSecret }}
+        - name: DB_ADDR
           valueFrom:
-            secretKeyRef:
-              name: app-be-secret
-              key: jwtsecret
+            configMapKeyRef:
+              name: app-be-configmap
+              key: db_addr
 ---
 apiVersion: v1
 kind: Service
