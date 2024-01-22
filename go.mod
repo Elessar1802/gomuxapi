@@ -1,14 +1,16 @@
 module github.com/Elessar1802/api
 
-go 1.21.5
-
-require github.com/gorilla/mux v1.8.1
+go 1.21
 
 require (
-	github.com/go-pg/pg/v10 v10.12.0 // indirect
+	github.com/go-pg/pg/v10 v10.12.0
+	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/google/uuid v1.5.0
+	github.com/gorilla/mux v1.8.1
+)
+
+require (
 	github.com/go-pg/zerochecker v0.2.0 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
-	github.com/google/uuid v1.5.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
