@@ -18,7 +18,7 @@ spec:
       containers:
       - name: app-be
         image: {{ .Values.backendImage }}
-        imagePullPolicy: Never # Otherwise It will try and pull it from dockerhub
+        imagePullPolicy: {{ .Values.imagePullPolicy }} # Otherwise It will try and pull it from dockerhub
         ports:
         - containerPort: 8000
         env:
