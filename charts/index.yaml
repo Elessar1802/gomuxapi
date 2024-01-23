@@ -1,0 +1,11 @@
+apiVersion: v1
+entries:
+  api-be:
+  - apiVersion: v1
+    created: "2024-01-23T11:48:08.606057+05:30"
+    digest: 3b1ca5696f8b1ccc5da0b9962d372814a74558c7995510453258a27222def981
+    name: api-be
+    urls:
+    - https://github.com/Elessar1802/gomuxapi/tree/main/charts/api-be-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-01-23T11:48:08.604837+05:30"

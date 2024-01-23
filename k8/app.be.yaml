@@ -17,8 +17,7 @@ spec:
     spec:
       containers:
       - name: app-be
-        image: appbe
-        imagePullPolicy: Never # Otherwise It will try and pull it from dockerhub
+        image: elessar1802/personal:latest
         ports:
         - containerPort: 8000
         env:
