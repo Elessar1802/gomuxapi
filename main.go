@@ -17,7 +17,9 @@ const PORT = ":8000"
 const API_PREFIX = "/api/v1"
 
 func main() {
-  addr := fmt.Sprintf("%s:%s", os.Getenv("APP_DB_SERVICE_SERVICE_HOST"), os.Getenv("APP_DB_SERVICE_SERVICE_PORT"))
+  // the kube service needs to be setup before the pod is created. Otherwise these env vars won't be available
+  // if we have coredns setup we can directly specify the service.metadata.name for hostname and then separately provide the port
+  addr := fmt.Sprintf("%s:%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"))
   db := pg.Connect(&pg.Options{
 		User: "postgres",
     Password: "odin",
@@ -45,4 +47,7 @@ func createTables (db *pg.DB) {
   db.Model(&repo.User{}).CreateTable(opts)
   db.Model(&repo.Attendance{}).CreateTable(opts)
   db.Model(&repo.Student{}).CreateTable(opts)
+  // there is no orm mapping for alter table hence need to use Exec
+  db.Model().Exec("ALTER TABLE students ADD CONSTRAINT FK_UserId FOREIGN KEY(id) REFERENCES users(id)");
+  db.Model().Exec("ALTER TABLE attendance ADD CONSTRAINT FK_UserId FOREIGN KEY(id) REFERENCES users(id)");
 }

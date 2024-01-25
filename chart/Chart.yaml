@@ -1,0 +1,7 @@
+apiVersion: v2
+version: 0.2.0
+name: appbe
+dependencies:
+  - name: postgresql
+    version: 13.4.1
+    repository: '@bitnami'

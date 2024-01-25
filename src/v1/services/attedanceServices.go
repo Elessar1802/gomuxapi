@@ -19,7 +19,7 @@ func PunchIn(db *pg.DB, id string) (interface{}, *err.Error) {
 
 func PunchOut(db *pg.DB, id string) (interface{}, *err.Error) {
 	at := repo.Attendance{Id: id, Date: time.Now(), Out: time.Now()}
-	_, er := db.Model(&at).Set("out = ?out").Where("id = ?id").Where("date = ?date").Where("out = null").Update()
+	_, er := db.Model(&at).Column("out").Where("id = ?id").Where("date = ?date").Where("out is null").Update()
 	if er != nil {
 		// TODO: handle errors in the middleware?
 		// FIXME: what about the error codes

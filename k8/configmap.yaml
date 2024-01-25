@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: app-be-configmap
 data:
-  db_addr: app-db-service # I need to specify the service metadata.name for the db
-    # the value will be of the type 15.19.0.1:54 with a port
+  dbHost: app-postgresql # I need to specify the service metadata.name for the db
+  dbPort: '5432' # default port for bitnami/postgres helm package

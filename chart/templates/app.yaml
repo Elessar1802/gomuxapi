@@ -39,15 +39,15 @@ spec:
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
-              name: app-be-secret
+              name: {{ .Values.secretmap }}
               key: jwtsecret
         - name: DB_HOST
           valueFrom:
             configMapKeyRef:
-              name: app-be-configmap
+              name: {{ .Values.configmap }}
               key: dbHost
         - name: DB_PORT
           valueFrom:
             configMapKeyRef:
-              name: app-be-configmap
+              name: {{ .Values.configmap }}
               key: dbPort
