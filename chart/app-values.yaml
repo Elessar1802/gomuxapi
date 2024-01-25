@@ -1,0 +1,7 @@
+postgresql: # this will override the child helms values.yaml
+  auth:
+    postgresPassword: odin
+    postgresUser: postgres
+    postgresDatabase: postgres
+configmap: app-be-configmap
+secretmap: app-be-secret
