@@ -1,11 +1,8 @@
 package services
 
 import (
-	// "fmt"
 	"net/http"
 	"os"
-	// "reflect"
-	// "strings"
 
 	enc "github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
@@ -43,18 +40,6 @@ func DeleteUser(db *pg.DB, id string) (enc.Response) {
 }
 
 func UpdateUser(db *pg.DB, u repo.User) (enc.Response) {
-  // mp := map[string]interface{}{}
-  // v := reflect.ValueOf(u)
-  // s := v.Type()
-  // empty := repo.User{}
-  // ev := reflect.ValueOf(empty)
-  // for i := 0; i < v.NumField(); i++ {
-  //   if v.Field(i).Interface() == ev.Field(i).Interface() {
-  //     continue
-  //   }
-  //   mp[strings.ToLower(s.Field(i).Name)] = v.Field(i).Interface()
-  // }
-  // _, er := db.Model(&mp).TableExpr("users").Where("id = ?", u.Id).Update()
   _, er := db.Model(&u).WherePK().UpdateNotZero()
 	if er != nil {
     // the user wasn't found
