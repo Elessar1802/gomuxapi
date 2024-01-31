@@ -11,7 +11,7 @@ spec:
     - protocol: TCP
       port: 8000 # the port at which the requests come to the service
       targetPort: 8000 # port at which the request is sent to on the pod/container
-      nodePort: 30000 # make it available to the external ip
+      nodePort: 30001 # make it available to the external ip
 ---
 apiVersion: apps/v1
 kind: Deployment

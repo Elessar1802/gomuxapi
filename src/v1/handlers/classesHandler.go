@@ -10,25 +10,23 @@ import (
 )
 
 func (h Handlers) ClassesHandler(w http.ResponseWriter, r *http.Request) {
-	var res interface{}
-	var er *err.Error
+	var res encoder.Response
 	method := r.Method
 
 	switch method {
 	case http.MethodGet:
 		// return all the registered classes and their respective ids
-		res, er = services.GetClasses(h.DB)
+		res = services.GetClasses(h.DB)
 
 	default:
-    res, er = err.BadRequestResponse()
+    res = err.BadRequestResponse()
 	}
 
-	encoder.NewEncoder(w).Encode(res, er)
+	encoder.NewEncoder(w).Encode(res)
 }
 
 func (h Handlers) ClassesHandlerId(w http.ResponseWriter, r *http.Request) {
-	var res interface{}
-	var er *err.Error
+	var res encoder.Response
 
 	params := mux.Vars(r)
 	id := params["id"]
@@ -36,11 +34,11 @@ func (h Handlers) ClassesHandlerId(w http.ResponseWriter, r *http.Request) {
 
 	switch method {
 	case http.MethodGet:
-		res, er = services.GetClass(h.DB, id)
+		res = services.GetClass(h.DB, id)
 
 	default:
-    res, er = err.BadRequestResponse()
+    res = err.BadRequestResponse()
 	}
 
-	encoder.NewEncoder(w).Encode(res, er)
+	encoder.NewEncoder(w).Encode(res)
 }

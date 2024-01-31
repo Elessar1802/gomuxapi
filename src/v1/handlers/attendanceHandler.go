@@ -12,8 +12,7 @@ import (
 )
 
 func (h Handlers) AttendanceClassHandlerId(w http.ResponseWriter, r *http.Request) {
-	var res interface{}
-	var er *err.Error
+	var res encoder.Response
 	method := r.Method
 	params := mux.Vars(r)
 	id := params["id"]
@@ -28,22 +27,21 @@ func (h Handlers) AttendanceClassHandlerId(w http.ResponseWriter, r *http.Reques
 	case http.MethodGet:
 		// only a teacher can check the attendance of
 		if claims["role"] != "teacher" {
-			res, er = err.UnauthorizedAccessResponse()
+			res = err.UnauthorizedAccessResponse()
 			break
 		}
 		// return all the registered classes and their respective ids
-		res, er = services.AttendanceClassId(h.DB, id, from, to)
+		res = services.AttendanceClassId(h.DB, id, from, to)
 
 	default:
-		res, er = err.BadRequestResponse()
+		res = err.MethodNotAllowedErrorResponse()
 	}
 
-	encoder.NewEncoder(w).Encode(res, er)
+	encoder.NewEncoder(w).Encode(res)
 }
 
 func (h Handlers) AttendanceUserHandlerId(w http.ResponseWriter, r *http.Request) {
-	var res interface{}
-	var er *err.Error
+	var res encoder.Response
 	method := r.Method
 	params := mux.Vars(r)
 	id := params["id"]
@@ -55,55 +53,58 @@ func (h Handlers) AttendanceUserHandlerId(w http.ResponseWriter, r *http.Request
 
 	switch method {
 	case http.MethodGet:
-    // the result will be of type []repo.Attendance
-    user, x := services.GetUser(h.DB, id)
-    if x != nil {
-      res, er = err.BadRequestResponse()
+    // we are going to fetch the details of user whose attendance is being requested 
+    // after fetching it we are going to run it through a check whether the user making the request
+    // is authorized to do so
+    r := services.GetUser(h.DB, id)
+    if r.Error != nil {
+      res = r
       break
     }
+    user := r.Payload
     u, ok := user.(repo.User)
 		if !ok {
-			res, er = err.BadRequestResponse()
+			res = err.InternalServerErrorResponse()
 			break
 		}
-		i, _ := claims["id"].(string)
-		r, _ := claims["role"].(string)
-		if authorized := isAuthorizedToViewAttendance(i, r, u); !authorized {
-			res, er = err.UnauthorizedAccessResponse()
+		_id, _ := claims["id"].(string)
+		_role, _ := claims["role"].(string)
+		if authorized := isAuthorizedToViewAttendance(_id, _role, u); !authorized {
+			res = err.UnauthorizedAccessResponse()
       break
 		}
-		res, er = services.AttendanceUserId(h.DB, id, from, to)
+    res = services.AttendanceUserId(h.DB, id, from, to)
 
 	case http.MethodPost:
 		// only teachers and students can register their attendance
 		if (claims["role"] != "teacher" && claims["role"] != "student") || claims["id"] != id {
       // only the user can punch in/out their own attendance
-			res, er = err.UnauthorizedAccessResponse()
+			res = err.UnauthorizedAccessResponse()
 			break
 		}
-		res, er = services.PunchIn(h.DB, id)
+		res = services.PunchIn(h.DB, id)
 
 	case http.MethodPut:
 		// only teachers and students can register their attendance
 		if (claims["role"] != "teacher" && claims["role"] != "student") || claims["id"] != id {
       // only the user can punch in/out their own attendance
-			res, er = err.UnauthorizedAccessResponse()
+			res = err.UnauthorizedAccessResponse()
 			break
 		}
-		res, er = services.PunchOut(h.DB, id)
+		res = services.PunchOut(h.DB, id)
 
 	default:
-		res, er = err.BadRequestResponse()
+		res = err.MethodNotAllowedErrorResponse()
 	}
 
-	encoder.NewEncoder(w).Encode(res, er)
+	encoder.NewEncoder(w).Encode(res)
 }
 
 func isAuthorizedToViewAttendance(id string, role string, user repo.User) bool {
 	if (role == "principal" && user.Role != "teacher") || // a principal can only view a teacher's attendance
-		(role == "teacher" && user.Role == "teacher" && id != user.Id) || // a teacher can view student attendance and as well their own attendance
-		(user.Role == "principal") || // a principal doesn't have attendance records
-		(role == "student" && id != user.Id) { // a student can only view their own attendance
+		 (role == "teacher" && user.Role == "teacher" && id != user.Id) || // a teacher can view student attendance and as well their own attendance
+		 (user.Role == "principal") || // a principal doesn't have attendance records
+		 (role == "student" && id != user.Id) { // a student can only view their own attendance
 		return false
 	}
 	return true

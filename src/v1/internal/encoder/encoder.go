@@ -2,38 +2,27 @@ package encoder
 
 import (
 	"encoding/json"
-	"github.com/Elessar1802/api/src/v1/internal/err"
-	"io"
+  "net/http"
 )
 
 type Response struct {
+  Code int            `json:"-"`
 	Success bool        `json:"success,notnull"`
 	Payload interface{} `json:"payload,omitempty"`
-	Error   *err.Error  `json:"error,omitempty"`
+	Error   interface{} `json:"error,omitempty"`
 }
 
 type Encoder struct {
+  w http.ResponseWriter
 	encoder *json.Encoder
 }
 
-func NewEncoder(w io.Writer) Encoder {
-	return Encoder{json.NewEncoder(w)}
+func NewEncoder(w http.ResponseWriter) Encoder {
+	return Encoder{w, json.NewEncoder(w)}
 }
 
-func (enc Encoder) Encode(payload interface{}, e *err.Error) {
-	var res Response
-	if e != nil {
-		res = Response{
-			Success: false,
-			Payload: nil,
-			Error:   e,
-		}
-		enc.encoder.Encode(res)
-		return
-	}
-	res = Response{
-		Success: true,
-		Payload: payload,
-	}
-	enc.encoder.Encode(res)
+func (enc Encoder) Encode(r Response) {
+  enc.w.WriteHeader(r.Code) // write the corresponding http code
+  r.Success = r.Error == nil
+	enc.encoder.Encode(r)
 }

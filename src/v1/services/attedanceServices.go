@@ -1,53 +1,87 @@
 package services
 
 import (
+	"net/http"
 	"time"
 
+	"github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
 	repo "github.com/Elessar1802/api/src/v1/repository"
 	"github.com/go-pg/pg/v10"
 )
 
-func PunchIn(db *pg.DB, id string) (interface{}, *err.Error) {
+const TIMEFORMAT = "2006/01/02"
+const MAX_ALLOWED_TIME_DIFFERENCE = 30*24 // 30 days in hours
+
+func PunchIn(db *pg.DB, id string) (encoder.Response) {
 	at := repo.Attendance{Id: id}
 	_, er := db.Model(&at).Insert()
 	if er != nil {
-		return nil, &err.Error{Code: 404, Message: er.Error()}
+    // can punch in only once for the day
+    return err.BadRequestResponse("User has already punched in for the day")
 	}
-	return at, nil
+  return encoder.Response{Code: http.StatusCreated}
 }
 
-func PunchOut(db *pg.DB, id string) (interface{}, *err.Error) {
+func PunchOut(db *pg.DB, id string) (encoder.Response) {
 	at := repo.Attendance{Id: id, Date: time.Now(), Out: time.Now()}
 	_, er := db.Model(&at).Column("out").Where("id = ?id").Where("date = ?date").Where("out is null").Update()
 	if er != nil {
-		// TODO: handle errors in the middleware?
-		// FIXME: what about the error codes
-		return nil, &err.Error{Code: 404, Message: er.Error()}
+    // most probably user is trying to punch out without punching in
+    return err.BadRequestResponse("User hasn't punched in today or already punched out")
 	}
-	return nil, nil
+  // this is from a put request
+  return encoder.Response{Code: http.StatusNoContent}
 }
 
-func AttendanceUserId(db *pg.DB, id string, from string, to string) (interface{}, *err.Error) {
+func parseDate(date string) (*time.Time) {
+  _date, _e := time.Parse(TIMEFORMAT, date)
+  if _e != nil {
+    return nil
+  }
+  return &_date
+}
+
+func AttendanceUserId(db *pg.DB, id string, from string, to string) (encoder.Response) {
 	at := []repo.Attendance{}
+  var _from, _to *time.Time
+  if _from = parseDate(from); _from == nil {
+    return err.BadRequestResponse("Ill-formed start date")
+  }
+  if _to = parseDate(to); _to == nil {
+    return err.BadRequestResponse("Ill-formed end date")
+  }
+  dif := _to.Sub(*_from).Hours()
+  if (dif < 0) {
+    return err.BadRequestResponse("End date can't be after start date")
+  } else if (dif > MAX_ALLOWED_TIME_DIFFERENCE) {
+    return err.BadRequestResponse("Specified date range exceeds the limit of 30 days")
+  }
 	er := db.Model(&at).Where("id = ?", id).Where(`"date" >= ?`, from).Where(`"date" <= ?`, to).Select()
 	if er != nil {
-		return nil, &err.Error{Code: 404, Message: er.Error()}
+    return err.BadRequestResponse()
 	}
-	return at, nil
+  return encoder.Response{Code: http.StatusOK, Payload: at}
 }
 
-func AttendanceClassId(db *pg.DB, id string, from string, to string) (interface{}, *err.Error) {
+func AttendanceClassId(db *pg.DB, id string, from string, to string) (encoder.Response) {
 	attendances := []repo.Attendance{}
   // Using joins
+  _er := GetClass(db, id)
+  if !_er.Success {
+    return _er
+  }
 	er := db.Model().Table("attendance").
 		ColumnExpr("attendance.*").
 		Join("JOIN students on students.id = attendance.id and students.class = ?", id).
 		Where("date >= ?", from).Where("date <= ?", to).
 		Select(&attendances)
 	if er != nil {
-		return nil, &err.Error{Code: 404, Message: er.Error()}
+    // TODO: is this a good thing? If the user is entering a malformed class name
+    // shouldn't we notify the user that the request is wrong?
+    // error can only occur is some table missing otherwise returns []
+    return err.InternalServerErrorResponse()
 	}
 	// attendances is an array of array of attendance records
-	return attendances, nil
+  return encoder.Response{Code: http.StatusOK, Payload: attendances}
 }
