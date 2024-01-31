@@ -38,6 +38,8 @@ func (h Handlers) UsersHandler(w http.ResponseWriter, r *http.Request) {
     }
     user.Id = uuid.NewString()
 		res = services.AddUser(h.DB, user)
+  default:
+		res = er.MethodNotAllowedErrorResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res)
@@ -60,7 +62,7 @@ func (h Handlers) UsersHandlerId(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		res = services.DeleteUser(h.DB, id)
 	default:
-		res = er.BadRequestResponse()
+		res = er.MethodNotAllowedErrorResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res)

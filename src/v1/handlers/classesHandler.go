@@ -19,7 +19,7 @@ func (h Handlers) ClassesHandler(w http.ResponseWriter, r *http.Request) {
 		res = services.GetClasses(h.DB)
 
 	default:
-    res = err.BadRequestResponse()
+    res = err.MethodNotAllowedErrorResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res)
@@ -37,7 +37,7 @@ func (h Handlers) ClassesHandlerId(w http.ResponseWriter, r *http.Request) {
 		res = services.GetClass(h.DB, id)
 
 	default:
-    res = err.BadRequestResponse()
+    res = err.MethodNotAllowedErrorResponse()
 	}
 
 	encoder.NewEncoder(w).Encode(res)

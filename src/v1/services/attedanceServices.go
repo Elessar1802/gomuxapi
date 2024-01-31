@@ -14,22 +14,38 @@ const TIMEFORMAT = "2006/01/02"
 const MAX_ALLOWED_TIME_DIFFERENCE = 30*24 // 30 days in hours
 
 func PunchIn(db *pg.DB, id string) (encoder.Response) {
-	at := repo.Attendance{Id: id}
+  at := repo.Attendance{Id: id, Date: time.Now(), In: time.Now()}
+
+  if p, e := db.Model(&at).Where("id = ?id").Where("date = ?date").Where("out is null").Exists(); p {
+    // the user hasn't punched out yet
+    if e != nil {
+      return err.BadRequestResponse(e.Error())
+    }
+    return err.BadRequestResponse("User is already punched in")
+  }
+
 	_, er := db.Model(&at).Insert()
 	if er != nil {
-    // can punch in only once for the day
-    return err.BadRequestResponse("User has already punched in for the day")
+    return err.BadRequestResponse(er.Error())
 	}
+
   return encoder.Response{Code: http.StatusCreated}
 }
 
 func PunchOut(db *pg.DB, id string) (encoder.Response) {
 	at := repo.Attendance{Id: id, Date: time.Now(), Out: time.Now()}
+
+  if p, _ := db.Model(&at).Where("id = ?id").Where("date = ?date").Where("out is null").Exists(); !p {
+    // the user hasn't punched out yet
+    return err.BadRequestResponse("User isn't punched in")
+  }
+
 	_, er := db.Model(&at).Column("out").Where("id = ?id").Where("date = ?date").Where("out is null").Update()
 	if er != nil {
     // most probably user is trying to punch out without punching in
-    return err.BadRequestResponse("User hasn't punched in today or already punched out")
+    return err.BadRequestResponse(er.Error())
 	}
+
   // this is from a put request
   return encoder.Response{Code: http.StatusNoContent}
 }
