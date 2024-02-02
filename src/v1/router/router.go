@@ -23,13 +23,20 @@ func getRoutes(db *pg.DB) []Route {
     // Otherwise we can get by without bothering for it if we are only bothered with simple requests
     // such as GET. For POST, PUT, DELETE (since they are non-simple need to configure OPTIONS method)
     // Options header is used for preflight requests from the fetchAPI
-    {"/users", h.UsersHandler, []string{"GET", "POST", "OPTIONS"}, nil},
-    {"/users/{id}", h.UsersHandlerId, []string{"GET", "PUT", "DELETE", "OPTIONS"}, nil},
+    {"/users", h.UsersHandler, []string{"GET", "OPTIONS"}, nil},
+    {"/users", h.OnlyPrincipal(h.UsersHandler), []string{"POST", "OPTIONS"}, nil},
+    {"/users/{id}", h.UsersHandlerId, []string{"GET", "OPTIONS"}, nil},
+    {"/users/{id}", h.OnlyMatchingID(h.UsersHandlerId), []string{"PUT", "OPTIONS"}, nil},
     // TODO: ask if this is a valid way of using query string
-    {"/attendance/class/{id}", h.AttendanceClassHandlerId, []string{"GET", "OPTIONS"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
-    {"/attendance/user/{id}", h.AttendanceUserHandlerId, []string{"GET", "OPTIONS"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
-    {"/attendance/user/{id}", h.AttendanceUserHandlerId, []string{"POST", "PUT", "OPTIONS"}, nil},
-    {"/classes", h.ClassesHandler, []string{"GET", "POST", "OPTIONS"}, nil},
+
+    // only teachers should be able to get class attendance
+    {"/attendance/class/{id}", h.OnlyTeachers(h.AttendanceClassHandlerId), []string{"GET", "OPTIONS"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
+    {"/attendance/user/{id}", h.UserAttendanceChecks(h.AttendanceUserHandlerId), []string{"GET", "OPTIONS"}, []string{"start_date", "{start_date}", "end_date", "{end_date}"}},
+    // a principal doesnt have a system of attendance
+    // people can punch in/out only for themselves 
+    {"/attendance/user/{id}", h.NotPrincipal(h.OnlyMatchingID(h.AttendanceUserHandlerId)), []string{"POST", "PUT", "OPTIONS"}, nil},
+
+    {"/classes", h.ClassesHandler, []string{"GET", "OPTIONS"}, nil},
     {"/classes/{id}", h.ClassesHandlerId, []string{"GET", "OPTIONS"}, nil},
   }
 }

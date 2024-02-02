@@ -1,7 +1,9 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Elessar1802/api/src/v1/internal/encoder"
@@ -11,10 +13,12 @@ import (
 )
 
 const TIMEFORMAT = "2006/01/02"
-const MAX_ALLOWED_TIME_DIFFERENCE = 30*24 // 30 days in hours
+const MAX_ALLOWED_DAYS = 31
+const MAX_ALLOWED_TIME_DIFFERENCE = MAX_ALLOWED_DAYS*24 // 31 days in hours
 
 func PunchIn(db *pg.DB, id string) (encoder.Response) {
-  at := repo.Attendance{Id: id, Date: time.Now(), In: time.Now()}
+  _int_id, _ := strconv.Atoi(id)
+  at := repo.Attendance{Id: _int_id, Date: time.Now(), In: time.Now()}
 
   if p, e := db.Model(&at).Where("id = ?id").Where("date = ?date").Where("out is null").Exists(); p {
     // the user hasn't punched out yet
@@ -33,7 +37,8 @@ func PunchIn(db *pg.DB, id string) (encoder.Response) {
 }
 
 func PunchOut(db *pg.DB, id string) (encoder.Response) {
-	at := repo.Attendance{Id: id, Date: time.Now(), Out: time.Now()}
+  _int_id, _ := strconv.Atoi(id)
+	at := repo.Attendance{Id: _int_id, Date: time.Now(), Out: time.Now()}
 
   if p, _ := db.Model(&at).Where("id = ?id").Where("date = ?date").Where("out is null").Exists(); !p {
     // the user hasn't punched out yet
@@ -59,7 +64,8 @@ func parseDate(date string) (*time.Time) {
 }
 
 func AttendanceUserId(db *pg.DB, id string, from string, to string) (encoder.Response) {
-	at := []repo.Attendance{}
+  at := []repo.Attendance{}
+  result := []repo.AttendanceRecordByDate{}
   var _from, _to *time.Time
   if _from = parseDate(from); _from == nil {
     return err.BadRequestResponse("Ill-formed start date")
@@ -71,32 +77,30 @@ func AttendanceUserId(db *pg.DB, id string, from string, to string) (encoder.Res
   if (dif < 0) {
     return err.BadRequestResponse("End date can't be after start date")
   } else if (dif > MAX_ALLOWED_TIME_DIFFERENCE) {
-    return err.BadRequestResponse("Specified date range exceeds the limit of 30 days")
+    return err.BadRequestResponse(fmt.Sprintf("Specified date range exceeds the limit of %d days", MAX_ALLOWED_DAYS))
   }
-	er := db.Model(&at).Where("id = ?", id).Where(`"date" >= ?`, from).Where(`"date" <= ?`, to).Select()
+	er := db.Model(&at).ColumnExpr("id, date, min(\"in\"), max(out), sum(out - \"in\")").Where("id = ?", id).Where(`"date" >= ?`, from).Where(`"date" <= ?`, to).Group("id", "date").Select(&result)
 	if er != nil {
-    return err.BadRequestResponse()
+    return err.InternalServerErrorResponse(er.Error())
 	}
-  return encoder.Response{Code: http.StatusOK, Payload: at}
+  return encoder.Response{Code: http.StatusOK, Payload: result}
 }
 
 func AttendanceClassId(db *pg.DB, id string, from string, to string) (encoder.Response) {
-	attendances := []repo.Attendance{}
+  attendances := []repo.AttendanceRecordByDate{}
   // Using joins
   _er := GetClass(db, id)
-  if !_er.Success {
+  if _er.Error != nil {
+    // propagate the error
     return _er
   }
-	er := db.Model().Table("attendance").
-		ColumnExpr("attendance.*").
-		Join("JOIN students on students.id = attendance.id and students.class = ?", id).
-		Where("date >= ?", from).Where("date <= ?", to).
+	er := db.Model(&repo.Attendance{}).
+		ColumnExpr("attendance.id, attendance.date, min(attendance.\"in\"), max(attendance.out), sum(attendance.out - attendance.\"in\")").
+		Join("INNER JOIN students on students.id = attendance.id and students.class = ?", id).
+		Where("date >= ?", from).Where("date <= ?", to).Group("attendance.id", "attendance.date").
 		Select(&attendances)
 	if er != nil {
-    // TODO: is this a good thing? If the user is entering a malformed class name
-    // shouldn't we notify the user that the request is wrong?
-    // error can only occur is some table missing otherwise returns []
-    return err.InternalServerErrorResponse()
+    return err.InternalServerErrorResponse(er.Error())
 	}
 	// attendances is an array of array of attendance records
   return encoder.Response{Code: http.StatusOK, Payload: attendances}

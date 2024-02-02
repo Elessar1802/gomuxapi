@@ -3,6 +3,7 @@ package services
 import (
 	"net/http"
 	"os"
+	"strconv"
 
 	enc "github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
@@ -12,7 +13,11 @@ import (
 )
 
 func GetUser(db *pg.DB, id string) (enc.Response) {
-	user := repo.User{Id: id}
+  _int_id, e := strconv.Atoi(id)
+  if e != nil {
+    return err.BadRequestResponse("Provided Id is malformed")
+  }
+	user := repo.User{Id: _int_id}
 	er := db.Model(&user).WherePK().Select()
 	if er != nil {
     return err.NotFoundErrorResponse()
@@ -31,7 +36,11 @@ func GetUsers(db *pg.DB) (enc.Response) {
 }
 
 func DeleteUser(db *pg.DB, id string) (enc.Response) {
-	u := repo.User{Id: id}
+  _int_id, e := strconv.Atoi(id)
+  if e != nil {
+    return err.BadRequestResponse("Provided Id is malformed")
+  }
+	u := repo.User{Id: _int_id}
 	_, er := db.Model(&u).WherePK().Delete()
 	if er != nil {
     return err.NotFoundErrorResponse()

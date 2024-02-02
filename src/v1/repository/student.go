@@ -1,6 +1,6 @@
 package repository
 
 type Student struct {
-  Id string `pg:",notnull" json:"id,notnull"`
-  Class string `pg:",notnull" json:"class,notnull"`
+  Id int `pg:",nopk,notnull" json:"id,notnull"`
+  Class string `pg:",nopk,notnull" json:"class,notnull"`
 }
