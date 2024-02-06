@@ -33,6 +33,7 @@ spec:
       containers:
       - name: app-be
         image: elessar1802/personal:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000 # the port of the container exposed to the pod. Should be equal to the targetPort of service in most cases
         env:
