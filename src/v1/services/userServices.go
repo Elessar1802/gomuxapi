@@ -2,14 +2,13 @@ package services
 
 import (
 	"net/http"
-	"os"
+	"fmt"
 	"strconv"
 
 	enc "github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
 	repo "github.com/Elessar1802/api/src/v1/repository"
 	"github.com/go-pg/pg/v10"
-	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 func GetUser(db *pg.DB, id string) (enc.Response) {
@@ -57,35 +56,35 @@ func UpdateUser(db *pg.DB, u repo.User) (enc.Response) {
   return enc.Response{Code: http.StatusNoContent}
 }
 
-func generateUserToken(u repo.User) (string, error) {
-  token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-    "id": u.Id,
-    "role": u.Role,
-  })
-  secret := os.Getenv("JWT_SECRET")
-  tokenString, e := token.SignedString([]byte(secret))
-  if e != nil {
-    return "", e
-  }
-  return tokenString, nil
-}
-
 func AddUser(db *pg.DB, u repo.User) (enc.Response) {
-  token, e := generateUserToken(u)
-  if e != nil {
-    return err.InternalServerErrorResponse()
-  }
-	_, er := db.Model(&u).Insert()
+  // FIXME: how to achieve atomicity ?
+  tx, er := db.Begin()
+  defer tx.Close()
+  x, er := tx.Model(&u).Insert()
 	if er != nil {
-    return err.BadRequestResponse()
+    _ = tx.Rollback()
+    return err.BadRequestResponse(er.Error())
 	}
   if u.Role == "student" {
     s := repo.Student{Id: u.Id, Class: u.Class}
-    _, er := db.Model(&s).Insert()
+    _, er := tx.Model(&s).Insert()
     if er != nil {
       // this should never fail unless students table doesn't exist
+      _ = tx.Rollback()
       return err.InternalServerErrorResponse()
     }
   }
-  return enc.Response{Code: http.StatusCreated, Payload: token}
+  // the default password is their respective phone number
+  password := fmt.Sprintf("%v", u.Phone)
+  c := repo.Credential{Id: strconv.Itoa(u.Id), Password: password, Role: u.Role}
+  _, er = tx.Model(&c).Insert()
+  if er != nil {
+    _ = tx.Rollback()
+    // this should never fail unless credentials table doesn't exist
+    return err.InternalServerErrorResponse()
+  }
+  if er := tx.Commit(); er != nil {
+    panic(er.Error())
+  }
+  return enc.Response{Code: http.StatusCreated, Payload: x}
 }

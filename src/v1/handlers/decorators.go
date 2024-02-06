@@ -8,8 +8,8 @@ import (
 	"github.com/Elessar1802/api/src/v1/internal/err"
 	"github.com/Elessar1802/api/src/v1/services"
 	repo "github.com/Elessar1802/api/src/v1/repository"
-	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
+  "github.com/Elessar1802/api/src/v1/internal/token"
 )
 
 /*
@@ -20,9 +20,7 @@ import (
 
 func (h Handlers) OnlyPrincipal(fn http.HandlerFunc) http.HandlerFunc {
   return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-    claims := jwt.MapClaims{}
-    jwt.NewParser().ParseUnverified(token, claims)
+    claims := token.GetClaims(token.GetToken(r))
 
     if claims["role"] != "principal" {
       encoder.NewEncoder(w).Encode(err.UnauthorizedAccessResponse())
@@ -37,9 +35,7 @@ func (h Handlers) OnlyMatchingID(fn http.HandlerFunc) http.HandlerFunc {
   return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id := vars["id"]
-		token := r.Header.Get("Authorization")
-    claims := jwt.MapClaims{}
-    jwt.NewParser().ParseUnverified(token, claims)
+    claims := token.GetClaims(token.GetToken(r))
 
     if id != claims["id"] {
       encoder.NewEncoder(w).Encode(err.UnauthorizedAccessResponse())
@@ -52,9 +48,7 @@ func (h Handlers) OnlyMatchingID(fn http.HandlerFunc) http.HandlerFunc {
 
 func (h Handlers) NotPrincipal(fn http.HandlerFunc) http.HandlerFunc {
   return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-    claims := jwt.MapClaims{}
-    jwt.NewParser().ParseUnverified(token, claims)
+    claims := token.GetClaims(token.GetToken(r))
 
     if "principal" == claims["role"] {
       encoder.NewEncoder(w).Encode(err.UnauthorizedAccessResponse())
@@ -67,9 +61,7 @@ func (h Handlers) NotPrincipal(fn http.HandlerFunc) http.HandlerFunc {
 
 func (h Handlers) OnlyTeachers(fn http.HandlerFunc) http.HandlerFunc {
   return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-    claims := jwt.MapClaims{}
-    jwt.NewParser().ParseUnverified(token, claims)
+    claims := token.GetClaims(token.GetToken(r))
 
     if claims["role"] != "teacher" {
       encoder.NewEncoder(w).Encode(err.UnauthorizedAccessResponse())
@@ -84,9 +76,7 @@ func (h Handlers) UserAttendanceChecks(fn http.HandlerFunc) http.HandlerFunc {
   return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id := vars["id"]
-		token := r.Header.Get("Authorization")
-    claims := jwt.MapClaims{}
-    jwt.NewParser().ParseUnverified(token, claims)
+    claims := token.GetClaims(token.GetToken(r))
 
     // we are going to fetch the details of user whose attendance is being requested 
     // after fetching it we are going to run it through a check whether the user making the request

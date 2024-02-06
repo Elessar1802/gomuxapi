@@ -2,19 +2,20 @@ package encoder
 
 import (
 	"encoding/json"
-  "net/http"
+	"net/http"
 )
 
 type Response struct {
-  Code int            `json:"-"`
-	Success bool        `json:"success,notnull"`
-	Payload interface{} `json:"payload,omitempty"`
-	Error   interface{} `json:"error,omitempty"`
+	Code    int          `json:"-"`
+	Success bool         `json:"success,notnull"`
+	Payload interface{}  `json:"payload,omitempty"`
+	Error   interface{}  `json:"error,omitempty"`
+	Cookie  *http.Cookie `json:"-"`
 }
 
 type Encoder struct {
-  w http.ResponseWriter
-	encoder *json.Encoder
+	w http.ResponseWriter
+  encoder *json.Encoder
 }
 
 func NewEncoder(w http.ResponseWriter) Encoder {
@@ -22,7 +23,12 @@ func NewEncoder(w http.ResponseWriter) Encoder {
 }
 
 func (enc Encoder) Encode(r Response) {
-  enc.w.WriteHeader(r.Code) // write the corresponding http code
-  r.Success = r.Error == nil
-	enc.encoder.Encode(r)
+  // The SetCookie needs to be called before the WriteHeader call
+  // otherwise it doesn't work
+	if r.Cookie != nil {
+		http.SetCookie(enc.w, r.Cookie)
+	}
+	enc.w.WriteHeader(r.Code) // write the corresponding http code
+	r.Success = r.Error == nil
+	json.NewEncoder(enc.w).Encode(r)
 }

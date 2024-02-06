@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/go-pg/pg/v10 v10.12.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
-	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
 )
 

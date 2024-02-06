@@ -46,18 +46,15 @@ func createTables (db *pg.DB) {
     IfNotExists: true,
   }
   db.Model(&repo.User{}).CreateTable(opts)
+  db.Model(&repo.Credential{}).CreateTable(opts)
   db.Model(&repo.Attendance{}).CreateTable(opts)
   db.Model(&repo.Student{}).CreateTable(opts)
   // there is no orm mapping for alter table hence need to use Exec
   db.Model().Exec("ALTER TABLE students ADD CONSTRAINT FK_UserId FOREIGN KEY(id) REFERENCES users(id)");
   db.Model().Exec("ALTER TABLE attendance ADD CONSTRAINT FK_UserId FOREIGN KEY(id) REFERENCES users(id)");
+  db.Model().Exec("ALTER TABLE credentials ADD CONSTRAINT FK_UserId FOREIGN KEY(id) REFERENCES users(id)");
 
   // initialize the principal user
-  name := os.Getenv("PRINCIPAL_NAME")
-  phone := os.Getenv("PRINCIPAL_PHONE")
-  if name == "" || phone == "" {
-    panic("Missing or malformed principal details as ENV VARS")
-  }
-  principal := repo.User{Id: 1, Name: name, Phone: phone, Role: "principal"}
-  fmt.Println(services.AddUser(db, principal).Payload) // we are returning the token
+  admin := repo.User{Id: 1, Name: "Admin", Phone: "0000000000", Role: "principal"}
+  services.AddUser(db, admin)
 }

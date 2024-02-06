@@ -23,10 +23,9 @@ func (h Handlers) UsersHandler(w http.ResponseWriter, r *http.Request) {
 		user := repo.User{}
 		json.NewDecoder(r.Body).Decode(&user)
     if user.Role == "student" && user.Class == "" {
-      res = er.BadRequestResponse()
+      res = er.BadRequestResponse("class attribute missing for student")
       break
     }
-    // create a uuid
 		res = services.AddUser(h.DB, user)
   default:
 		res = er.MethodNotAllowedErrorResponse()
