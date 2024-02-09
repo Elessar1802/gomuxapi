@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"net/http"
-  "strconv"
+	"strconv"
 
 	"github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
-	"github.com/Elessar1802/api/src/v1/services"
+	"github.com/Elessar1802/api/src/v1/internal/token"
 	repo "github.com/Elessar1802/api/src/v1/repository"
+	"github.com/Elessar1802/api/src/v1/services"
 	"github.com/gorilla/mux"
-  "github.com/Elessar1802/api/src/v1/internal/token"
 )
 
 /*

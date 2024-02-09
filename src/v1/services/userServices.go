@@ -2,11 +2,11 @@ package services
 
 import (
 	"net/http"
-	"fmt"
 	"strconv"
 
 	enc "github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
+	"github.com/Elessar1802/api/src/v1/internal/passwd"
 	repo "github.com/Elessar1802/api/src/v1/repository"
 	"github.com/go-pg/pg/v10"
 )
@@ -48,16 +48,17 @@ func DeleteUser(db *pg.DB, id string) (enc.Response) {
 }
 
 func UpdateUser(db *pg.DB, u repo.User) (enc.Response) {
-  _, er := db.Model(&u).WherePK().UpdateNotZero()
+  // only name or phone can be changed
+  _, er := db.Model(&u).Column("name", "phone").WherePK().UpdateNotZero()
 	if er != nil {
     // the user wasn't found
-    return err.NotFoundErrorResponse()
+    return err.NotFoundErrorResponse(er.Error())
 	}
   return enc.Response{Code: http.StatusNoContent}
 }
 
 func AddUser(db *pg.DB, u repo.User) (enc.Response) {
-  // FIXME: how to achieve atomicity ?
+  // NOTE: the following command allows us to get atomicity with transactions from Postgresql
   tx, er := db.Begin()
   defer tx.Close()
   x, er := tx.Model(&u).Insert()
@@ -71,17 +72,17 @@ func AddUser(db *pg.DB, u repo.User) (enc.Response) {
     if er != nil {
       // this should never fail unless students table doesn't exist
       _ = tx.Rollback()
-      return err.InternalServerErrorResponse()
+      return err.InternalServerErrorResponse(er.Error())
     }
   }
   // the default password is their respective phone number
-  password := fmt.Sprintf("%v", u.Phone)
-  c := repo.Credential{Id: strconv.Itoa(u.Id), Password: password, Role: u.Role}
+  password := passwd.GetHash(u.Phone)
+  c := repo.Credential{Id: u.Id, Password: password, Role: u.Role}
   _, er = tx.Model(&c).Insert()
   if er != nil {
     _ = tx.Rollback()
     // this should never fail unless credentials table doesn't exist
-    return err.InternalServerErrorResponse()
+    return err.InternalServerErrorResponse(er.Error())
   }
   if er := tx.Commit(); er != nil {
     panic(er.Error())

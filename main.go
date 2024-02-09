@@ -22,7 +22,7 @@ func main() {
   // if we have coredns setup we can directly specify the service.metadata.name for hostname and then separately provide the port
   addr := fmt.Sprintf("%s:%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"))
   db := pg.Connect(&pg.Options{
-		User: "postgres",
+		User: "amloch",
     Password: "odin",
     Database: "postgres",
     Addr: addr,

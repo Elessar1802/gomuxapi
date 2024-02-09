@@ -10,6 +10,7 @@ services:
     # the subnet and then statically specify the ip address of the database container
     links:
       - "database:db" # this will make the database service container accessible using the db hostname
+        # NOTE: so I can just pass "db:5432" as address to pg.Connect call in backend
 
   database:
     image: postgres
