@@ -23,6 +23,7 @@ func getRoutes(db *pg.DB) []Route {
 		// Otherwise we can get by without bothering for it if we are only bothered with simple requests
 		// such as GET. For POST, PUT, DELETE (since they are non-simple need to configure OPTIONS method)
 		// Options header is used for preflight requests from the fetchAPI
+		{"/users", h.UsersHandler, []string{"GET", "OPTIONS"}, []string{"name", "{name}"}}, // this has to be before otherwise the router will hit the following first and never get here
 		{"/users", h.UsersHandler, []string{"GET", "OPTIONS"}, nil},
 		{"/users", h.OnlyPrincipal(h.UsersHandler), []string{"POST", "OPTIONS"}, nil},
 		{"/users/{id}", h.UsersHandlerId, []string{"GET", "OPTIONS"}, nil},
@@ -37,6 +38,7 @@ func getRoutes(db *pg.DB) []Route {
 
 		{"/classes", h.ClassesHandler, []string{"GET", "OPTIONS"}, nil},
 		{"/classes/{id}", h.ClassesHandlerId, []string{"GET", "OPTIONS"}, nil},
+		{"/validate", h.ValidateHandler, []string{"GET", "OPTIONS"}, nil},
 	}
 }
 
@@ -45,7 +47,7 @@ func InitRouter(router *mux.Router, db *pg.DB) {
   h := handlers.Handlers{DB: db}
   // this is an unauthorized path; the subrouter contains all the authorized path;
   // validated using the Auth middleware
-  router.Path("/login").Methods("POST", "PUT", "OPTIONS").HandlerFunc(h.LoginHandler)
+  router.Path("/auth").Methods("POST", "PUT", "DELETE", "OPTIONS").HandlerFunc(h.LoginHandler)
 	for _, r := range getRoutes(db) {
 		sub.
 			Path(r.path).

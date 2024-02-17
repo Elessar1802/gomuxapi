@@ -52,7 +52,7 @@ func PunchOut(db *pg.DB, id string) (encoder.Response) {
 	}
 
   // this is from a put request
-  return encoder.Response{Code: http.StatusNoContent}
+  return encoder.Response{Code: http.StatusOK}
 }
 
 func parseDate(date string) (*time.Time) {
@@ -93,6 +93,19 @@ func AttendanceClassId(db *pg.DB, id string, from string, to string) (encoder.Re
   if _er.Error != nil {
     // propagate the error
     return _er
+  }
+  var _from, _to *time.Time
+  if _from = parseDate(from); _from == nil {
+    return err.BadRequestResponse("Ill-formed start date")
+  }
+  if _to = parseDate(to); _to == nil {
+    return err.BadRequestResponse("Ill-formed end date")
+  }
+  dif := _to.Sub(*_from).Hours()
+  if (dif < 0) {
+    return err.BadRequestResponse("End date can't be after start date")
+  } else if (dif > MAX_ALLOWED_TIME_DIFFERENCE) {
+    return err.BadRequestResponse(fmt.Sprintf("Specified date range exceeds the limit of %d days", MAX_ALLOWED_DAYS))
   }
 	er := db.Model(&repo.Attendance{}).
 		ColumnExpr("attendance.id, attendance.date, min(attendance.\"in\"), max(attendance.out), sum(attendance.out - attendance.\"in\")").

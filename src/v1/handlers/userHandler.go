@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-  "strconv"
+	"strconv"
 
 	"github.com/Elessar1802/api/src/v1/internal/encoder"
 	er "github.com/Elessar1802/api/src/v1/internal/err"
@@ -18,7 +18,10 @@ func (h Handlers) UsersHandler(w http.ResponseWriter, r *http.Request) {
 	
 	switch method {
 	case http.MethodGet:
-		res = services.GetUsers(h.DB)
+    query := mux.Vars(r)["name"]
+		res = services.GetUsers(h.DB, query)
+  case http.MethodHead:
+    res = encoder.Response{Code: http.StatusOK}
 	case http.MethodPost:
 		user := repo.User{}
 		json.NewDecoder(r.Body).Decode(&user)

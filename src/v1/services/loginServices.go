@@ -3,7 +3,6 @@ package services
 import (
 	"net/http"
 	"os"
-	"strconv"
 
 	enc "github.com/Elessar1802/api/src/v1/internal/encoder"
 	"github.com/Elessar1802/api/src/v1/internal/err"
@@ -15,7 +14,7 @@ import (
 
 func generateUserToken(u repo.Credential) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   strconv.Itoa(u.Id),
+		"id":   u.Id,
 		"role": u.Role,
 	})
 	secret := os.Getenv("JWT_SECRET")
@@ -50,8 +49,13 @@ func SetToken(db *pg.DB, c repo.Credential) enc.Response {
 		}
 	}
 
-	cookie := http.Cookie{Name: "app.token", Value: c.Token, MaxAge: 5000000}
+  cookie := http.Cookie{Name: "app.token", Value: c.Token, Path: "/api/v1", MaxAge: 5000000}
 	return enc.Response{Code: http.StatusOK, Payload: c.Token, Cookie: &cookie}
+}
+
+func DeleteToken(db *pg.DB) enc.Response {
+  cookie := http.Cookie{Name: "app.token", Value: "", MaxAge: -1};
+	return enc.Response{Code: http.StatusOK, Cookie: &cookie}
 }
 
 func UpdatePassword(db *pg.DB, c repo.Credential) enc.Response {
@@ -63,5 +67,5 @@ func UpdatePassword(db *pg.DB, c repo.Credential) enc.Response {
 	if e != nil {
 		return err.BadRequestResponse("Malformed credential object")
 	}
-	return enc.Response{Code: http.StatusNoContent}
+	return enc.Response{Code: http.StatusOK}
 }

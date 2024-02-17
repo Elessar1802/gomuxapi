@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,14 +25,30 @@ func GetUser(db *pg.DB, id string) (enc.Response) {
   return enc.Response{Code: http.StatusOK, Payload: user}
 }
 
-func GetUsers(db *pg.DB) (enc.Response) {
+func GetUsers(db *pg.DB, query string) (enc.Response) {
 	var users []repo.User
-	er := db.Model(&users).Select()
+  var er error
+  if query != "" {
+    // custom query
+    // the reasoning being a wrong formatting on the end of go-pg when using query string
+    er = db.Model(&users).Where(fmt.Sprintf("name ilike '%%%v%%'", query)).Select()
+  } else {
+    er = db.Model(&users).Select()
+  }
+	if er != nil {
+    // we shouldn't get any errors here unless the table users doesn't exist
+    return err.NotFoundErrorResponse(er.Error())
+	}
+  return enc.Response{Code: http.StatusOK, Payload: users}
+}
+
+func GetUsersCount(db *pg.DB) (enc.Response) {
+	count, er := db.Model(&repo.User{}).Count()
 	if er != nil {
     // we shouldn't get any errors here unless the table users doesn't exist
     return err.NotFoundErrorResponse()
 	}
-  return enc.Response{Code: http.StatusOK, Payload: users}
+  return enc.Response{Code: http.StatusOK, Payload: count}
 }
 
 func DeleteUser(db *pg.DB, id string) (enc.Response) {
@@ -44,7 +61,7 @@ func DeleteUser(db *pg.DB, id string) (enc.Response) {
 	if er != nil {
     return err.NotFoundErrorResponse()
 	}
-  return enc.Response{Code: http.StatusNoContent}
+  return enc.Response{Code: http.StatusOK}
 }
 
 func UpdateUser(db *pg.DB, u repo.User) (enc.Response) {
@@ -54,7 +71,7 @@ func UpdateUser(db *pg.DB, u repo.User) (enc.Response) {
     // the user wasn't found
     return err.NotFoundErrorResponse(er.Error())
 	}
-  return enc.Response{Code: http.StatusNoContent}
+  return enc.Response{Code: http.StatusOK}
 }
 
 func AddUser(db *pg.DB, u repo.User) (enc.Response) {
@@ -77,7 +94,7 @@ func AddUser(db *pg.DB, u repo.User) (enc.Response) {
   }
   // the default password is their respective phone number
   password := passwd.GetHash(u.Phone)
-  c := repo.Credential{Id: u.Id, Password: password, Role: u.Role}
+  c := repo.Credential{Id: strconv.Itoa(u.Id), Password: password, Role: u.Role}
   _, er = tx.Model(&c).Insert()
   if er != nil {
     _ = tx.Rollback()

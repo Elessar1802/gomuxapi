@@ -11,6 +11,8 @@ func Corsmw(next http.Handler) http.Handler {
     // If we are using the Authorization header we need to specify this here
     // https://stackoverflow.com/questions/10548883/request-header-field-authorization-is-not-allowed-error-tastypie
     w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+    w.Header().Set("Access-Control-Allow-Credentials", "true")
+    w.Header().Set("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, OPTIONS");
     if r.Method == http.MethodOptions {
       return
     }
